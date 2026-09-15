@@ -19,7 +19,7 @@ jobs:
     timeout-minutes: 380
 
     steps:
-      - name: Setup Environment
+      - name: Setup Environment 
         run: |
           export DEBIAN_FRONTEND=noninteractive
           sudo apt-get update -qq
@@ -31,8 +31,11 @@ jobs:
             nautilus \
             dbus-x11 \
             gnome-software \
+            gnome-shell-extension-ubuntu-dock \
             yaru-theme-gtk \
             yaru-theme-icon \
+            yaru-theme-sound \
+            fonts-ubuntu \
             curl \
             unzip
           
@@ -57,7 +60,16 @@ jobs:
           [org/gnome/desktop/interface]
           gtk-theme='Yaru-dark'
           icon-theme='Yaru'
+          cursor-theme='Yaru'
+          font-name='Ubuntu 11'
           color-scheme='prefer-dark'
+
+          [org/gnome/shell]
+          enabled-extensions=['ubuntu-dock@ubuntu.com']
+
+          [org/gnome/shell/extensions/dash-to-dock]
+          dock-position='LEFT'
+          dash-max-icon-size=48
           EOF
           
           dconf update || true
@@ -77,7 +89,7 @@ jobs:
           gsettings set org.gnome.desktop.session idle-delay 0 || true
           gsettings set org.gnome.desktop.screensaver lock-enabled false || true
 
-      - name: Keep Alive (6 Hours+)
+      - name: Keep
         run: |
           sleep 21600
           
