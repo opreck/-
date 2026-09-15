@@ -15,8 +15,8 @@ on:
 
 jobs:
   crd:
-    runs-on: ubuntu-22.04
-    timeout-minutes: 360
+    runs-on: ubuntu-latest
+    timeout-minutes: 380
 
     steps:
       - name: Setup Environment
@@ -30,32 +30,22 @@ jobs:
             gnome-terminal \
             nautilus \
             dbus-x11 \
-            rclone \
-            htop \
-            btop \
-            curl \
-            unzip \
-            vlc \
-            gimp \
-            qbittorrent \
             gnome-software \
             yaru-theme-gtk \
-            yaru-theme-icon
+            yaru-theme-icon \
+            curl \
+            unzip
           
-          wget -q https://dl.google.com/linux/direct/chrome-remote-desktop_current_amd64.deb
-          sudo dpkg -i chrome-remote-desktop_current_amd64.deb > /dev/null 2>&1 || sudo apt-get install -f -y -qq > /dev/null 2>&1
-          rm -f chrome-remote-desktop_current_amd64.deb
-          
-          wget -q "https://code.visualstudio.com/sha/download?build=stable&os=linux-deb-x64" -O vscode.deb
-          sudo dpkg -i vscode.deb > /dev/null 2>&1 || sudo apt-get install -f -y -qq > /dev/null 2>&1
-          rm -f vscode.deb
-          
-          wget -q https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb
-          sudo dpkg -i google-chrome-stable_current_amd64.deb > /dev/null 2>&1 || sudo apt-get install -f -y -qq > /dev/null 2>&1
-          rm -f google-chrome-stable_current_amd64.deb
-
           sudo mkdir -p /usr/share/backgrounds
-          sudo curl -sL "https://raw.githubusercontent.com/canonical/ubuntu-wallpapers/main/jammy/Jammy-Jellyfish_WP_4096x2304_Ubuntu_Mascut.png" -o /usr/share/backgrounds/jammy-wallpaper.png
+          
+          curl -sL "https://code.visualstudio.com/sha/download?build=stable&os=linux-deb-x64" -o vscode.deb &
+          curl -sL "https://dl.google.com/linux/direct/chrome-remote-desktop_current_amd64.deb" -o crd.deb &
+          curl -sL "https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb" -o chrome.deb &
+          sudo curl -sL "https://raw.githubusercontent.com/canonical/ubuntu-wallpapers/main/jammy/Jammy-Jellyfish_WP_4096x2304_Ubuntu_Mascut.png" -o /usr/share/backgrounds/jammy-wallpaper.png &
+          wait
+          
+          sudo dpkg -i vscode.deb crd.deb chrome.deb > /dev/null 2>&1 || sudo apt-get install -f -y -qq > /dev/null 2>&1
+          rm -f vscode.deb crd.deb chrome.deb
 
           mkdir -p ~/.config/dconf/user.d/
           cat << 'EOF' > ~/.config/dconf/user.d/00-custom
@@ -74,24 +64,6 @@ jobs:
 
           sudo bash -c 'echo "exec /usr/bin/gnome-session" > /etc/chrome-remote-desktop-session'
 
-      - name: Re-
-        run: |
-          mkdir -p ~/.config/rclone
-          cat << 'EOF' > ~/.config/rclone/rclone.conf
-          ${{ secrets.RCLONE_CONFIG_DATA }}
-          EOF
-          
-          rclone copy gdrive:CRD_Full_Backup/HomeDir /home/runner/ \
-            --links \
-            --transfers 8 \
-            --checkers 16 \
-            --tpslimit 12 \
-            --fast-list \
-            --drive-chunk-size 64M || true
-
-          rm -rf ~/.dbus ~/.ICEauthority ~/.Xauthority ~/.cache ~/.local/share/trash
-          rm -rf ~/.config/google-chrome/Singleton* ~/.config/google-chrome/Running*
-
       - name: Register
         run: |
           CODE="${{ inputs.auth_code }}"
@@ -105,30 +77,7 @@ jobs:
           gsettings set org.gnome.desktop.session idle-delay 0 || true
           gsettings set org.gnome.desktop.screensaver lock-enabled false || true
 
-      - name: Keep
+      - name: Keep Alive (6 Hours+)
         run: |
-          sleep 19800
-
-      - name: Back
-        if: always()
-        run: |
-          mkdir -p ~/.config/rclone
-          cat << 'EOF' > ~/.config/rclone/rclone.conf
-          ${{ secrets.RCLONE_CONFIG_DATA }}
-          EOF
+          sleep 21600
           
-          rclone sync /home/runner/ gdrive:CRD_Full_Backup/HomeDir \
-            --links \
-            --transfers 8 \
-            --checkers 16 \
-            --tpslimit 12 \
-            --fast-list \
-            --drive-chunk-size 64M \
-            --exclude ".config/rclone/**" \
-            --exclude ".cache/**" \
-            --exclude ".dbus/**" \
-            --exclude ".local/share/trash/**" \
-            --exclude ".ICEauthority" \
-            --exclude ".Xauthority" \
-            --exclude ".gnupg/**"
-            
