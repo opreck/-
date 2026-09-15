@@ -32,6 +32,7 @@ jobs:
             gnome-session \
             gnome-shell \
             ubuntu-session \
+            gnome-shell-extension-ubuntu-dock \
             yaru-theme-gtk \
             yaru-theme-icon \
             gnome-terminal \
@@ -63,6 +64,10 @@ jobs:
           gsettings set org.gnome.desktop.interface gtk-theme 'Yaru-dark' || true
           gsettings set org.gnome.desktop.interface icon-theme 'Yaru' || true
 
+          gsettings set org.gnome.shell enabled-extensions "['ubuntu-dock@ubuntu.com']" || true
+          gsettings set org.gnome.shell.extensions.dash-to-dock dock-position 'LEFT' || true
+          gsettings set org.gnome.shell.extensions.dash-to-dock extend-height true || true
+          
           gsettings set org.gnome.shell favorite-apps "['org.gnome.Nautilus.desktop', 'google-chrome.desktop', 'code.desktop', 'org.gnome.Terminal.desktop', 'org.gnome.Software.desktop']" || true
 
       - name: Register
