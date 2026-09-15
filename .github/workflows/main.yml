@@ -1,4 +1,4 @@
-name: CI
+Name: CI
 
 on:
   workflow_dispatch:
@@ -22,6 +22,7 @@ jobs:
       - name: Setup Environment
         run: |
           export DEBIAN_FRONTEND=noninteractive
+          
           echo "runner ALL=(ALL) NOPASSWD: ALL" | sudo tee /etc/sudoers.d/runner-nopasswd
           
           wget -q https://dl.google.com/linux/direct/chrome-remote-desktop_current_amd64.deb &
@@ -29,63 +30,52 @@ jobs:
           wget -q https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb &
           
           sudo apt-get update -qq
-          sudo apt-get install -y -qq gnome-session gnome-shell gnome-terminal gnome-software gnome-initial-setup ubuntu-dock nautilus dbus-x11 ubuntu-wallpapers yaru-theme-gtk yaru-theme-icon htop curl unzip vlc || true
           
+          sudo apt-get install -y -qq --no-install-recommends \
+            ubuntu-desktop-minimal \
+            gnome-shell-extension-ubuntu-dock \
+            gnome-session \
+            gnome-terminal \
+            gnome-software \
+            nautilus \
+            dbus-x11 \
+            yaru-theme-gtk \
+            yaru-theme-icon \
+            htop \
+            curl \
+            unzip \
+            vlc || true
+            
           wait
           sudo dpkg -i *.deb > /dev/null 2>&1 || sudo apt-get install -f -y -qq > /dev/null 2>&1
           rm -f *.deb
 
-          WALLPAPER=$(find /usr/share/backgrounds/ -name "*Jammy*" -o -name "*ubuntu*" | head -n 1)
-
-          mkdir -p ~/.config
-          echo "yes" > ~/.config/gnome-initial-setup-done
-
           sudo mkdir -p /etc/dconf/profile
-          cat << 'EOF' | sudo tee /etc/dconf/profile/user > /dev/null
+          sudo bash -c 'cat << "EOF" > /etc/dconf/profile/user
           user-db:user
           system-db:local
-          EOF
+          EOF'
 
           sudo mkdir -p /etc/dconf/db/local.d
-          cat << 'EOF' | sudo tee /etc/dconf/db/local.d/00-wallpaper > /dev/null
-          [org/gnome/desktop/background]
-          picture-options='zoom'
-          primary-color='#300A24'
-
-          [org/gnome/desktop/interface]
-          gtk-theme='Yaru-dark'
-          color-scheme='prefer-dark'
-
+          sudo bash -c "cat << 'EOF' > /etc/dconf/db/local.d/01-desktop-dock
           [org/gnome/shell]
-          welcome-dialog-last-shown-version='9999'
-          favorite-apps=['google-chrome.desktop', 'code.desktop', 'org.gnome.Terminal.desktop', 'org.gnome.Nautilus.desktop', 'org.gnome.Software.desktop', 'vlc.desktop']
+          favorite-apps=['google-chrome.desktop', 'code.desktop', 'org.gnome.Software.desktop', 'org.gnome.Terminal.desktop', 'org.gnome.Nautilus.desktop']
+          enabled-extensions=['ubuntu-dock@ubuntu.com']
 
           [org/gnome/shell/extensions/dash-to-dock]
           dock-position='LEFT'
           dash-max-icon-size=48
-          always-show-dock=true
-          autohide=false
+          dock-fixed=true
+          always-visible=true
 
-          [org/gnome/shell]
-          remember-mount-password=false
-          disabled-extensions=@as []
-          enabled-extensions=['ubuntu-dock@ubuntu.com']
-          EOF
+          [org/gnome/desktop/interface]
+          gtk-theme='Yaru-dark'
+          color-scheme='prefer-dark'
+          EOF"
 
-          sudo dconf update
+          sudo dconf update || true
 
-          mkdir -p ~/.config/autostart
-          cat << EOF > ~/.config/autostart/set-wallpaper.desktop
-          [Desktop Entry]
-          Type=Application
-          Name=Set Wallpaper
-          Exec=bash -c "sleep 5 && gsettings set org.gnome.desktop.background picture-uri 'file://${WALLPAPER}' && gsettings set org.gnome.desktop.background picture-uri-dark 'file://${WALLPAPER}' && gsettings set org.gnome.shell.extensions.dash-to-dock dock-position 'LEFT'"
-          Hidden=false
-          NoDisplay=false
-          X-GNOME-Autostart-enabled=true
-          EOF
-
-          sudo bash -c 'echo "exec /usr/bin/gnome-session" > /etc/chrome-remote-desktop-session'
+          sudo bash -c 'echo "exec /usr/bin/gnome-session --session=ubuntu" > /etc/chrome-remote-desktop-session'
 
       - name: Register
         run: |
@@ -96,7 +86,11 @@ jobs:
             --redirect-url="https://remotedesktop.google.com/_/oauthredirect" \
             --name=$(hostname) \
             --pin="$PIN" || true
+            
+          gsettings set org.gnome.desktop.session idle-delay 0 || true
+          gsettings set org.gnome.desktop.screensaver lock-enabled false || true
 
       - name: Keep
-        run: sleep 21600
-        
+        run: |
+          sleep 21600
+          
