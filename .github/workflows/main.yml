@@ -22,26 +22,36 @@ jobs:
       - name: Setup Environment
         run: |
           export DEBIAN_FRONTEND=noninteractive
-          sudo apt-get update -qq
           
-          sudo apt-get install -y -qq \
-            ubuntu-desktop-minimal \
+          sudo systemctl stop gdm3 snapd || true
+          sudo systemctl disable gdm3 snapd || true
+
+          sudo apt-get update -qq
+
+          sudo apt-get install -y -qq --no-install-recommends \
+            gnome-session \
+            gnome-shell \
+            ubuntu-session \
+            yaru-theme-gtk \
+            yaru-theme-icon \
             gnome-terminal \
             gnome-software \
             synaptic \
             screenfetch \
+            xvfb \
+            x11-xserver-utils \
             curl \
             unzip
-          
+
           sudo mkdir -p /usr/share/backgrounds
-          
+
           curl -sL "https://code.visualstudio.com/sha/download?build=stable&os=linux-deb-x64" -o vscode.deb &
           curl -sL "https://dl.google.com/linux/direct/chrome-remote-desktop_current_amd64.deb" -o crd.deb &
           curl -sL "https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb" -o chrome.deb &
           sudo curl -sL "https://raw.githubusercontent.com/canonical/ubuntu-wallpapers/main/jammy/Jammy-Jellyfish_WP_4096x2304_Ubuntu_Mascut.png" -o /usr/share/backgrounds/jammy-wallpaper.png &
           wait
-          
-          sudo dpkg -i vscode.deb crd.deb chrome.deb > /dev/null 2>&1 || sudo apt-get install -f -y -qq > /dev/null 2>&1
+
+          sudo dpkg -i vscode.deb crd.deb chrome.deb || sudo apt-get install -f -y -qq
           rm -f vscode.deb crd.deb chrome.deb
 
           sudo bash -c 'echo "exec /usr/bin/gnome-session --session=ubuntu" > /etc/chrome-remote-desktop-session'
