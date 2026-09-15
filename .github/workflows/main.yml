@@ -19,7 +19,7 @@ jobs:
     timeout-minutes: 360
 
     steps:
-      - name: Setup
+      - name: Setup Environment
         run: |
           export DEBIAN_FRONTEND=noninteractive
           
@@ -38,40 +38,38 @@ jobs:
             gnome-software \
             nautilus \
             dbus-x11 \
-            ubuntu-wallpapers-jammy \
+            ubuntu-wallpapers \
             yaru-theme-gtk \
             yaru-theme-icon \
             htop \
             curl \
             unzip \
-            vlc
+            vlc || true
             
           wait
           sudo dpkg -i *.deb > /dev/null 2>&1 || sudo apt-get install -f -y -qq > /dev/null 2>&1
           rm -f *.deb
 
-          WALLPAPER="/usr/share/backgrounds/ubuntu-wallpapers/Jammy-Jellyfish_WP_4096x2304_Ubuntu_Mascut.png"
+          WALLPAPER=$(find /usr/share/backgrounds/ -name "*Jammy*" -o -name "*ubuntu*" | head -n 1)
 
           sudo mkdir -p /etc/dconf/profile
-          sudo bash -c 'cat << EOF > /etc/dconf/profile/user
+          sudo bash -c 'cat << "EOF" > /etc/dconf/profile/user
           user-db:user
           system-db:local
           EOF'
 
           sudo mkdir -p /etc/dconf/db/local.d
-          sudo bash -c "cat << EOF > /etc/dconf/db/local.d/00-wallpaper
+          sudo bash -c "cat << 'EOF' > /etc/dconf/db/local.d/00-wallpaper
           [org/gnome/desktop/background]
-          picture-uri='file://${WALLPAPER}'
-          picture-uri-dark='file://${WALLPAPER}'
           picture-options='zoom'
-          primary-color='rgb(48,10,36)'
+          primary-color='#300A24'
 
           [org/gnome/desktop/interface]
           gtk-theme='Yaru-dark'
           color-scheme='prefer-dark'
           EOF"
 
-          sudo dconf update
+          sudo dconf update || true
 
           mkdir -p ~/.config/autostart
           cat << EOF > ~/.config/autostart/set-wallpaper.desktop
@@ -94,12 +92,12 @@ jobs:
             --code="$CODE" \
             --redirect-url="https://remotedesktop.google.com/_/oauthredirect" \
             --name=$(hostname) \
-            --pin="$PIN"
+            --pin="$PIN" || true
             
           gsettings set org.gnome.desktop.session idle-delay 0 || true
           gsettings set org.gnome.desktop.screensaver lock-enabled false || true
 
-      - name: Keep 
+      - name: Keep
         run: |
           sleep 21600
           
