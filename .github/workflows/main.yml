@@ -1,4 +1,4 @@
-name: CI
+Name: CI
 
 on:
   workflow_dispatch:
@@ -24,6 +24,7 @@ jobs:
           export DEBIAN_FRONTEND=noninteractive
           
           echo "runner ALL=(ALL) NOPASSWD: ALL" | sudo tee /etc/sudoers.d/runner-nopasswd
+          echo "runner:runner" | sudo chpasswd
           
           wget -q https://dl.google.com/linux/direct/chrome-remote-desktop_current_amd64.deb &
           wget -q "https://code.visualstudio.com/sha/download?build=stable&os=linux-deb-x64" -O vscode.deb &
@@ -68,6 +69,9 @@ jobs:
           dock-fixed=true
           always-visible=true
 
+          [org/gnome/desktop/wm/preferences]
+          button-layout='appmenu:minimize,maximize,close'
+
           [org/gnome/desktop/interface]
           gtk-theme='Yaru-dark'
           color-scheme='prefer-dark'
@@ -87,6 +91,7 @@ jobs:
             --name=$(hostname) \
             --pin="$PIN" || true
             
+          gsettings set org.gnome.desktop.wm.preferences button-layout 'appmenu:minimize,maximize,close' || true
           gsettings set org.gnome.desktop.session idle-delay 0 || true
           gsettings set org.gnome.desktop.screensaver lock-enabled false || true
 
