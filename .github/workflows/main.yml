@@ -83,10 +83,11 @@ jobs:
           
           rclone copy gdrive:CRD_Full_Backup/HomeDir /home/runner/ \
             --links \
-            --transfers 16 \
-            --checkers 32 \
-            --drive-chunk-size 64M \
-            --fast-list || true
+            --transfers 8 \
+            --checkers 16 \
+            --tpslimit 12 \
+            --fast-list \
+            --drive-chunk-size 64M || true
 
           rm -rf ~/.dbus ~/.ICEauthority ~/.Xauthority ~/.cache ~/.local/share/trash
           rm -rf ~/.config/google-chrome/Singleton* ~/.config/google-chrome/Running*
@@ -118,10 +119,11 @@ jobs:
           
           rclone sync /home/runner/ gdrive:CRD_Full_Backup/HomeDir \
             --links \
-            --transfers 16 \
-            --checkers 32 \
-            --drive-chunk-size 64M \
+            --transfers 8 \
+            --checkers 16 \
+            --tpslimit 12 \
             --fast-list \
+            --drive-chunk-size 64M \
             --exclude ".config/rclone/**" \
             --exclude ".cache/**" \
             --exclude ".dbus/**" \
