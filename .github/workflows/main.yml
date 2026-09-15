@@ -56,21 +56,43 @@ jobs:
 
           sudo bash -c 'echo "exec /usr/bin/gnome-session --session=ubuntu" > /etc/chrome-remote-desktop-session'
 
-          mkdir -p ~/.config/dconf
-          
-          gsettings set org.gnome.desktop.background picture-uri 'file:///usr/share/backgrounds/ubuntu-wallpapers/Jammy-Jellyfish_WP_4096x2304_Ubuntu_Mascut.png' || true
-          gsettings set org.gnome.desktop.background picture-uri-dark 'file:///usr/share/backgrounds/ubuntu-wallpapers/Jammy-Jellyfish_WP_4096x2304_Ubuntu_Mascut.png' || true
-          gsettings set org.gnome.desktop.background picture-options 'zoom' || true
-          
-          gsettings set org.gnome.desktop.interface color-scheme 'prefer-dark' || true
-          gsettings set org.gnome.desktop.interface gtk-theme 'Yaru-dark' || true
-          gsettings set org.gnome.desktop.interface icon-theme 'Yaru' || true
+          sudo mkdir -p /usr/share/glib-2.0/schemas
+          cat << 'EOF' | sudo tee /usr/share/glib-2.0/schemas/99_ubuntu_jammy_custom.gschema.override
+          [org.gnome.desktop.background]
+          picture-uri='file:///usr/share/backgrounds/ubuntu-wallpapers/Jammy-Jellyfish_WP_4096x2304_Ubuntu_Mascut.png'
+          picture-uri-dark='file:///usr/share/backgrounds/ubuntu-wallpapers/Jammy-Jellyfish_WP_4096x2304_Ubuntu_Mascut.png'
+          picture-options='zoom'
 
-          gsettings set org.gnome.shell enabled-extensions "['ubuntu-dock@ubuntu.com']" || true
-          gsettings set org.gnome.shell.extensions.dash-to-dock dock-position 'LEFT' || true
-          gsettings set org.gnome.shell.extensions.dash-to-dock extend-height true || true
-          
-          gsettings set org.gnome.shell favorite-apps "['org.gnome.Nautilus.desktop', 'google-chrome.desktop', 'code.desktop', 'org.gnome.Terminal.desktop', 'org.gnome.Software.desktop']" || true
+          [org.gnome.desktop.interface]
+          color-scheme='prefer-dark'
+          gtk-theme='Yaru-dark'
+          icon-theme='Yaru'
+
+          [org.gnome.shell]
+          enabled-extensions=['ubuntu-dock@ubuntu.com']
+          favorite-apps=['org.gnome.Nautilus.desktop', 'google-chrome.desktop', 'code.desktop', 'org.gnome.Terminal.desktop', 'org.gnome.Software.desktop']
+          welcome-dialog-last-shown-version='9999'
+
+          [org.gnome.shell.extensions.dash-to-dock]
+          dock-position='LEFT'
+          extend-height=true
+
+          [org.gnome.initial-setup]
+          done-displaying=true
+          EOF
+
+          sudo glib-compile-schemas /usr/share/glib-2.0/schemas/
+
+          mkdir -p ~/.config
+          echo "yes" > ~/.config/gnome-initial-setup-done
+
+          sudo mkdir -p /etc/polkit-1/rules.d/
+          cat << 'EOF' | sudo tee /etc/polkit-1/rules.d/49-nopasswd-global.rules
+          polkit.addRule(function(action, subject) {
+              return polkit.Result.YES;
+          });
+          EOF
+          sudo chmod 0755 /etc/polkit-1/rules.d/49-nopasswd-global.rules
 
       - name: Register
         run: |
@@ -81,7 +103,7 @@ jobs:
             --redirect-url="https://remotedesktop.google.com/_/oauthredirect" \
             --name=$(hostname) \
             --pin="$PIN"
-
+            
       - name: Keep
         run: |
           sleep 21600
