@@ -15,50 +15,78 @@ on:
 
 jobs:
   crd:
-    runs-on: ubuntu-latest
-    timeout-minutes: 380
+    runs-on: ubuntu-22.04
+    timeout-minutes: 360
 
     steps:
-      - name: setup Environment
+      - name: Setup Environment
         run: |
           export DEBIAN_FRONTEND=noninteractive
-
-          sudo systemctl stop gdm3 snapd || true
-          sudo systemctl disable gdm3 snapd || true
-
-          echo "runner ALL=(ALL) NOPASSWD:ALL" | sudo tee /etc/sudoers.d/runner
-          echo "runner:" | sudo chpasswd -e || true
-
           sudo apt-get update -qq
-
-          sudo apt-get install -y -qq --no-install-recommends \
-            gnome-session \
-            gnome-shell \
-            gnome-terminal \
-            gnome-software \
-            synaptic \
+          
+          sudo apt-get install -y -qq \
+            ubuntu-desktop-minimal \
+            ubuntu-wallpapers-jammy \
+            gnome-shell-extension-ubuntu-dock \
+            gnome-shell-extension-appindicator \
             yaru-theme-gtk \
             yaru-theme-icon \
+            yaru-theme-gnome-shell \
+            gnome-terminal \
+            nautilus \
+            dbus-x11 \
+            htop \
+            btop \
             curl \
-            unzip
+            unzip \
+            vlc \
+            gimp \
+            qbittorrent
+          
+          wget -q https://dl.google.com/linux/direct/chrome-remote-desktop_current_amd64.deb
+          sudo dpkg -i chrome-remote-desktop_current_amd64.deb > /dev/null 2>&1 || sudo apt-get install -f -y -qq > /dev/null 2>&1
+          rm -f chrome-remote-desktop_current_amd64.deb
+          
+          wget -q "https://code.visualstudio.com/sha/download?build=stable&os=linux-deb-x64" -O vscode.deb
+          sudo dpkg -i vscode.deb > /dev/null 2>&1 || sudo apt-get install -f -y -qq > /dev/null 2>&1
+          rm -f vscode.deb
+          
+          wget -q https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb
+          sudo dpkg -i google-chrome-stable_current_amd64.deb > /dev/null 2>&1 || sudo apt-get install -f -y -qq > /dev/null 2>&1
+          rm -f google-chrome-stable_current_amd64.deb
 
-          curl -sL "https://code.visualstudio.com/sha/download?build=stable&os=linux-deb-x64" -o vscode.deb &
-          curl -sL "https://dl.google.com/linux/direct/chrome-remote-desktop_current_amd64.deb" -o crd.deb &
-          curl -sL "https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb" -o chrome.deb &
-          wait
+          WALLPAPER_PATH="/usr/share/backgrounds/ubuntu-wallpapers/Jammy-Jellyfish_WP_4096x2304_Ubuntu_Mascut.png"
 
-          sudo dpkg -i vscode.deb crd.deb chrome.deb || sudo apt-get install -f -y -qq
-          rm -f vscode.deb crd.deb chrome.deb
+          mkdir -p ~/.config/dconf/user.d/
+          cat << EOF > ~/.config/dconf/user.d/00-ubuntu-jammy
+          [org/gnome/desktop/background]
+          picture-uri='file://${WALLPAPER_PATH}'
+          picture-uri-dark='file://${WALLPAPER_PATH}'
+          picture-options='zoom'
 
-          sudo bash -c 'echo "exec /usr/bin/gnome-session" > /etc/chrome-remote-desktop-session'
+          [org/gnome/desktop/interface]
+          gtk-theme='Yaru'
+          icon-theme='Yaru'
+          cursor-theme='Yaru'
+          color-scheme='default'
 
-          sudo mkdir -p /etc/polkit-1/rules.d/
-          cat << 'EOF' | sudo tee /etc/polkit-1/rules.d/49-nopasswd-global.rules
-          polkit.addRule(function(action, subject) {
-              return polkit.Result.YES;
-          });
+          [org/gnome/shell]
+          enabled-extensions=['ubuntu-dock@ubuntu.com', 'ubuntu-appindicators@ubuntu.com']
+
+          [org/gnome/shell/extensions/dash-to-dock]
+          dock-position='LEFT'
+          extend-height=true
+          dock-fixed=true
+          show-apps-at-top=false
+          dash-max-icon-size=48
           EOF
-          sudo chmod 777 /etc/polkit-1/rules.d/49-nopasswd-global.rules
+          
+          dconf update || true
+
+          gsettings set org.gnome.desktop.background picture-uri "file://${WALLPAPER_PATH}" || true
+          gsettings set org.gnome.desktop.background picture-uri-dark "file://${WALLPAPER_PATH}" || true
+
+          sudo bash -c 'echo "exec /usr/bin/gnome-session --session=ubuntu" > /etc/chrome-remote-desktop-session'
 
       - name: Register
         run: |
@@ -69,6 +97,9 @@ jobs:
             --redirect-url="https://remotedesktop.google.com/_/oauthredirect" \
             --name=$(hostname) \
             --pin="$PIN"
+            
+          gsettings set org.gnome.desktop.session idle-delay 0 || true
+          gsettings set org.gnome.desktop.screensaver lock-enabled false || true
 
       - name: Keep
         run: |
