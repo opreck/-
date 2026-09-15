@@ -16,14 +16,15 @@ on:
 jobs:
   crd:
     runs-on: ubuntu-latest
-    timeout-minutes: 350
+    timeout-minutes: 360
 
     steps:
-      - name: setup
+      - name: Setup Environment
         run: |
           export DEBIAN_FRONTEND=noninteractive
           sudo apt-get update -qq
-          sudo apt-get install -y -qq desktop-base xfce4 xfce4-terminal xscreensaver rclone htop curl unzip vlc
+          
+          sudo apt-get install -y -qq gnome-session gnome-terminal nautilus dbus-x11 rclone htop curl unzip vlc
           
           wget -q https://dl.google.com/linux/direct/chrome-remote-desktop_current_amd64.deb
           sudo dpkg -i chrome-remote-desktop_current_amd64.deb > /dev/null 2>&1 || sudo apt-get install -f -y -qq > /dev/null 2>&1
@@ -33,24 +34,24 @@ jobs:
           sudo dpkg -i vscode.deb > /dev/null 2>&1 || sudo apt-get install -f -y -qq > /dev/null 2>&1
           rm -f vscode.deb
           
-          sudo bash -c 'echo "exec /usr/bin/xfce4-session" > /etc/chrome-remote-desktop-session'
+          sudo bash -c 'echo "exec /usr/bin/gnome-session" > /etc/chrome-remote-desktop-session'
 
-      - name: Data
+      - name: Re-
         run: |
           mkdir -p ~/.config/rclone
           cat << 'EOF' > ~/.config/rclone/rclone.conf
           ${{ secrets.RCLONE_CONFIG_DATA }}
           EOF
           
-          
           rclone copy gdrive:CRD_Full_Backup/HomeDir /home/runner/ \
             --links \
             --transfers 16 \
             --checkers 32 \
-            --drive-chunk-size 64M || true
+            --drive-chunk-size 64M \
+            --fast-list || true
 
-          # (socket) Terminal, XFCE & Chrome no locked/crash
-          rm -rf ~/.dbus ~/.ICEauthority ~/.Xauthority ~/.config/google-chrome/Singleton* ~/.config/google-chrome/Running*
+          rm -rf ~/.dbus ~/.ICEauthority ~/.Xauthority ~/.cache ~/.local/share/trash
+          rm -rf ~/.config/google-chrome/Singleton* ~/.config/google-chrome/Running*
 
       - name: Register
         run: |
@@ -61,12 +62,15 @@ jobs:
             --redirect-url="https://remotedesktop.google.com/_/oauthredirect" \
             --name=$(hostname) \
             --pin="$PIN"
+            
+          gsettings set org.gnome.desktop.session idle-delay 0 || true
+          gsettings set org.gnome.desktop.screensaver lock-enabled false || true
 
       - name: Keep Alive
         run: |
           sleep 19800
 
-      - name: Data
+      - name: Back
         if: always()
         run: |
           mkdir -p ~/.config/rclone
@@ -74,13 +78,17 @@ jobs:
           ${{ secrets.RCLONE_CONFIG_DATA }}
           EOF
           
-          
           rclone sync /home/runner/ gdrive:CRD_Full_Backup/HomeDir \
             --links \
             --transfers 16 \
             --checkers 32 \
             --drive-chunk-size 64M \
+            --fast-list \
             --exclude ".config/rclone/**" \
+            --exclude ".cache/**" \
             --exclude ".dbus/**" \
+            --exclude ".local/share/trash/**" \
             --exclude ".ICEauthority" \
-            --exclude ".Xauthority"
+            --exclude ".Xauthority" \
+            --exclude ".gnupg/**"
+            
