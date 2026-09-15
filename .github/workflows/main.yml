@@ -25,19 +25,22 @@ jobs:
           sudo apt-get update -qq
           
           sudo apt-get install -y -qq \
-            ubuntu-desktop-minimal \
+            gnome-session \
+            gnome-shell \
             gnome-terminal \
             nautilus \
             dbus-x11 \
             rclone \
             htop \
+            btop \
             curl \
             unzip \
             vlc \
+            gimp \
+            qbittorrent \
+            gnome-software \
             yaru-theme-gtk \
-            yaru-theme-icon \
-            yaru-theme-sound \
-            ubuntu-wallpapers-jammy
+            yaru-theme-icon
           
           wget -q https://dl.google.com/linux/direct/chrome-remote-desktop_current_amd64.deb
           sudo dpkg -i chrome-remote-desktop_current_amd64.deb > /dev/null 2>&1 || sudo apt-get install -f -y -qq > /dev/null 2>&1
@@ -47,21 +50,29 @@ jobs:
           sudo dpkg -i vscode.deb > /dev/null 2>&1 || sudo apt-get install -f -y -qq > /dev/null 2>&1
           rm -f vscode.deb
           
-          sudo bash -c 'echo "exec /usr/bin/gnome-session" > /etc/chrome-remote-desktop-session'
+          wget -q https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb
+          sudo dpkg -i google-chrome-stable_current_amd64.deb > /dev/null 2>&1 || sudo apt-get install -f -y -qq > /dev/null 2>&1
+          rm -f google-chrome-stable_current_amd64.deb
 
-          gsettings set org.gnome.desktop.interface gtk-theme 'Yaru' || true
-          gsettings set org.gnome.desktop.interface icon-theme 'Yaru' || true
-          gsettings set org.gnome.desktop.interface cursor-theme 'Yaru' || true
+          sudo mkdir -p /usr/share/backgrounds
+          sudo curl -sL "https://raw.githubusercontent.com/canonical/ubuntu-wallpapers/main/jammy/Jammy-Jellyfish_WP_4096x2304_Ubuntu_Mascut.png" -o /usr/share/backgrounds/jammy-wallpaper.png
+
+          mkdir -p ~/.config/dconf/user.d/
+          cat << 'EOF' > ~/.config/dconf/user.d/00-custom
+          [org/gnome/desktop/background]
+          picture-uri='file:///usr/share/backgrounds/jammy-wallpaper.png'
+          picture-uri-dark='file:///usr/share/backgrounds/jammy-wallpaper.png'
+          picture-options='zoom'
+
+          [org/gnome/desktop/interface]
+          gtk-theme='Yaru-dark'
+          icon-theme='Yaru'
+          color-scheme='prefer-dark'
+          EOF
           
-          gsettings set org.gnome.desktop.background picture-uri "file:///usr/share/backgrounds/Jammy-Jellyfish_WP_4096x2304_Ubuntu_Mascut.png" || true
-          gsettings set org.gnome.desktop.background picture-uri-dark "file:///usr/share/backgrounds/Jammy-Jellyfish_WP_4096x2304_Ubuntu_Mascut.png" || true
-          gsettings set org.gnome.desktop.background picture-options 'zoom' || true
+          dconf update || true
 
-          gnome-extensions enable ubuntu-dock@ubuntu.com || true
-          gsettings set org.gnome.shell.extensions.dash-to-dock dock-position 'LEFT' || true
-          gsettings set org.gnome.shell.extensions.dash-to-dock extend-height true || true
-          gsettings set org.gnome.shell.extensions.dash-to-dock dock-fixed true || true
-          gsettings set org.gnome.shell.extensions.dash-to-dock dash-max-icon-size 48 || true
+          sudo bash -c 'echo "exec /usr/bin/gnome-session" > /etc/chrome-remote-desktop-session'
 
       - name: Re-
         run: |
