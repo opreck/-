@@ -33,6 +33,8 @@ jobs:
             gnome-shell \
             ubuntu-session \
             gnome-shell-extension-ubuntu-dock \
+            ubuntu-wallpapers \
+            ubuntu-wallpapers-jammy \
             yaru-theme-gtk \
             yaru-theme-icon \
             gnome-terminal \
@@ -44,12 +46,9 @@ jobs:
             curl \
             unzip
 
-          sudo mkdir -p /usr/share/backgrounds
-
           curl -sL "https://code.visualstudio.com/sha/download?build=stable&os=linux-deb-x64" -o vscode.deb &
           curl -sL "https://dl.google.com/linux/direct/chrome-remote-desktop_current_amd64.deb" -o crd.deb &
           curl -sL "https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb" -o chrome.deb &
-          sudo curl -sL "https://raw.githubusercontent.com/canonical/ubuntu-wallpapers/main/jammy/Jammy-Jellyfish_WP_4096x2304_Ubuntu_Mascut.png" -o /usr/share/backgrounds/jammy-wallpaper.png &
           wait
 
           sudo dpkg -i vscode.deb crd.deb chrome.deb || sudo apt-get install -f -y -qq
@@ -58,8 +57,11 @@ jobs:
           sudo bash -c 'echo "exec /usr/bin/gnome-session --session=ubuntu" > /etc/chrome-remote-desktop-session'
 
           mkdir -p ~/.config/dconf
-          gsettings set org.gnome.desktop.background picture-uri 'file:///usr/share/backgrounds/jammy-wallpaper.png' || true
-          gsettings set org.gnome.desktop.background picture-uri-dark 'file:///usr/share/backgrounds/jammy-wallpaper.png' || true
+          
+          gsettings set org.gnome.desktop.background picture-uri 'file:///usr/share/backgrounds/ubuntu-wallpapers/Jammy-Jellyfish_WP_4096x2304_Ubuntu_Mascut.png' || true
+          gsettings set org.gnome.desktop.background picture-uri-dark 'file:///usr/share/backgrounds/ubuntu-wallpapers/Jammy-Jellyfish_WP_4096x2304_Ubuntu_Mascut.png' || true
+          gsettings set org.gnome.desktop.background picture-options 'zoom' || true
+          
           gsettings set org.gnome.desktop.interface color-scheme 'prefer-dark' || true
           gsettings set org.gnome.desktop.interface gtk-theme 'Yaru-dark' || true
           gsettings set org.gnome.desktop.interface icon-theme 'Yaru' || true
