@@ -15,7 +15,7 @@ on:
 
 jobs:
   crd:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     timeout-minutes: 360
 
     steps:
@@ -24,7 +24,20 @@ jobs:
           export DEBIAN_FRONTEND=noninteractive
           sudo apt-get update -qq
           
-          sudo apt-get install -y -qq gnome-session gnome-terminal nautilus dbus-x11 rclone htop curl unzip vlc
+          sudo apt-get install -y -qq \
+            ubuntu-desktop-minimal \
+            gnome-terminal \
+            nautilus \
+            dbus-x11 \
+            rclone \
+            htop \
+            curl \
+            unzip \
+            vlc \
+            yaru-theme-gtk \
+            yaru-theme-icon \
+            yaru-theme-sound \
+            ubuntu-wallpapers-jammy
           
           wget -q https://dl.google.com/linux/direct/chrome-remote-desktop_current_amd64.deb
           sudo dpkg -i chrome-remote-desktop_current_amd64.deb > /dev/null 2>&1 || sudo apt-get install -f -y -qq > /dev/null 2>&1
@@ -35,6 +48,20 @@ jobs:
           rm -f vscode.deb
           
           sudo bash -c 'echo "exec /usr/bin/gnome-session" > /etc/chrome-remote-desktop-session'
+
+          gsettings set org.gnome.desktop.interface gtk-theme 'Yaru' || true
+          gsettings set org.gnome.desktop.interface icon-theme 'Yaru' || true
+          gsettings set org.gnome.desktop.interface cursor-theme 'Yaru' || true
+          
+          gsettings set org.gnome.desktop.background picture-uri "file:///usr/share/backgrounds/Jammy-Jellyfish_WP_4096x2304_Ubuntu_Mascut.png" || true
+          gsettings set org.gnome.desktop.background picture-uri-dark "file:///usr/share/backgrounds/Jammy-Jellyfish_WP_4096x2304_Ubuntu_Mascut.png" || true
+          gsettings set org.gnome.desktop.background picture-options 'zoom' || true
+
+          gnome-extensions enable ubuntu-dock@ubuntu.com || true
+          gsettings set org.gnome.shell.extensions.dash-to-dock dock-position 'LEFT' || true
+          gsettings set org.gnome.shell.extensions.dash-to-dock extend-height true || true
+          gsettings set org.gnome.shell.extensions.dash-to-dock dock-fixed true || true
+          gsettings set org.gnome.shell.extensions.dash-to-dock dash-max-icon-size 48 || true
 
       - name: Re-
         run: |
@@ -66,7 +93,7 @@ jobs:
           gsettings set org.gnome.desktop.session idle-delay 0 || true
           gsettings set org.gnome.desktop.screensaver lock-enabled false || true
 
-      - name: Keep Alive
+      - name: Keep
         run: |
           sleep 19800
 
