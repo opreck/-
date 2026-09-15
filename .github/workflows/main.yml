@@ -19,62 +19,28 @@ jobs:
     timeout-minutes: 380
 
     steps:
-      - name: Setup Environment 
+      - name: Setup Environment
         run: |
           export DEBIAN_FRONTEND=noninteractive
           sudo apt-get update -qq
           
           sudo apt-get install -y -qq \
-            gnome-session \
-            gnome-shell \
+            ubuntu-desktop-minimal \
             gnome-terminal \
             nautilus \
-            dbus-x11 \
             gnome-software \
-            gnome-shell-extension-ubuntu-dock \
-            yaru-theme-gtk \
-            yaru-theme-icon \
-            yaru-theme-sound \
-            fonts-ubuntu \
             curl \
             unzip
-          
-          sudo mkdir -p /usr/share/backgrounds
           
           curl -sL "https://code.visualstudio.com/sha/download?build=stable&os=linux-deb-x64" -o vscode.deb &
           curl -sL "https://dl.google.com/linux/direct/chrome-remote-desktop_current_amd64.deb" -o crd.deb &
           curl -sL "https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb" -o chrome.deb &
-          sudo curl -sL "https://raw.githubusercontent.com/canonical/ubuntu-wallpapers/main/jammy/Jammy-Jellyfish_WP_4096x2304_Ubuntu_Mascut.png" -o /usr/share/backgrounds/jammy-wallpaper.png &
           wait
           
           sudo dpkg -i vscode.deb crd.deb chrome.deb > /dev/null 2>&1 || sudo apt-get install -f -y -qq > /dev/null 2>&1
           rm -f vscode.deb crd.deb chrome.deb
 
-          mkdir -p ~/.config/dconf/user.d/
-          cat << 'EOF' > ~/.config/dconf/user.d/00-custom
-          [org/gnome/desktop/background]
-          picture-uri='file:///usr/share/backgrounds/jammy-wallpaper.png'
-          picture-uri-dark='file:///usr/share/backgrounds/jammy-wallpaper.png'
-          picture-options='zoom'
-
-          [org/gnome/desktop/interface]
-          gtk-theme='Yaru-dark'
-          icon-theme='Yaru'
-          cursor-theme='Yaru'
-          font-name='Ubuntu 11'
-          color-scheme='prefer-dark'
-
-          [org/gnome/shell]
-          enabled-extensions=['ubuntu-dock@ubuntu.com']
-
-          [org/gnome/shell/extensions/dash-to-dock]
-          dock-position='LEFT'
-          dash-max-icon-size=48
-          EOF
-          
-          dconf update || true
-
-          sudo bash -c 'echo "exec /usr/bin/gnome-session" > /etc/chrome-remote-desktop-session'
+          sudo bash -c 'echo "exec /usr/bin/gnome-session --session=ubuntu" > /etc/chrome-remote-desktop-session'
 
       - name: Register
         run: |
