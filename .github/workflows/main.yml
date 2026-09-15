@@ -25,10 +25,11 @@ jobs:
           sudo apt-get update -qq
           
           sudo apt-get install -y -qq \
-            xfce4 \
-            xfce4-terminal \
-            yaru-theme-gtk \
-            yaru-theme-icon \
+            ubuntu-desktop-minimal \
+            gnome-terminal \
+            gnome-software \
+            synaptic \
+            screenfetch \
             curl \
             unzip
           
@@ -43,35 +44,16 @@ jobs:
           sudo dpkg -i vscode.deb crd.deb chrome.deb > /dev/null 2>&1 || sudo apt-get install -f -y -qq > /dev/null 2>&1
           rm -f vscode.deb crd.deb chrome.deb
 
-          mkdir -p ~/.config/xfce4/xfconf/xfce-perchannel-xml/
-          cat << 'EOF' > ~/.config/xfce4/xfconf/xfce-perchannel-xml/xsettings.xml
-          <?xml version="1.0" encoding="UTF-8"?>
-          <channel name="xsettings" version="1.0">
-            <property name="Net" type="empty">
-              <property name="ThemeName" type="string" value="Yaru-dark"/>
-              <property name="IconThemeName" type="string" value="Yaru"/>
-            </property>
-          </channel>
-          EOF
+          sudo bash -c 'echo "exec /usr/bin/gnome-session --session=ubuntu" > /etc/chrome-remote-desktop-session'
 
-          mkdir -p ~/.config/xfce4/xfconf/xfce-perchannel-xml/
-          cat << 'EOF' > ~/.config/xfce4/xfconf/xfce-perchannel-xml/xfce4-desktop.xml
-          <?xml version="1.0" encoding="UTF-8"?>
-          <channel name="xfce4-desktop" version="1.0">
-            <property name="backdrop" type="empty">
-              <property name="screen0" type="empty">
-                <property name="monitor0" type="empty">
-                  <property name="workspace0" type="empty">
-                    <property name="last-image" type="string" value="/usr/share/backgrounds/jammy-wallpaper.png"/>
-                    <property name="image-style" type="int" value="5"/>
-                  </property>
-                </property>
-              </property>
-            </property>
-          </channel>
-          EOF
+          mkdir -p ~/.config/dconf
+          gsettings set org.gnome.desktop.background picture-uri 'file:///usr/share/backgrounds/jammy-wallpaper.png' || true
+          gsettings set org.gnome.desktop.background picture-uri-dark 'file:///usr/share/backgrounds/jammy-wallpaper.png' || true
+          gsettings set org.gnome.desktop.interface color-scheme 'prefer-dark' || true
+          gsettings set org.gnome.desktop.interface gtk-theme 'Yaru-dark' || true
+          gsettings set org.gnome.desktop.interface icon-theme 'Yaru' || true
 
-          sudo bash -c 'echo "exec /usr/bin/startxfce4" > /etc/chrome-remote-desktop-session'
+          gsettings set org.gnome.shell favorite-apps "['org.gnome.Nautilus.desktop', 'google-chrome.desktop', 'code.desktop', 'org.gnome.Terminal.desktop', 'org.gnome.Software.desktop']" || true
 
       - name: Register
         run: |
